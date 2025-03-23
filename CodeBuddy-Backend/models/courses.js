@@ -1,29 +1,55 @@
 const mongoose = require("mongoose");
 
 const courseSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  description: { type: String, required: true },
-  modules: [
+  course_id: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  course_name: {
+    type: String,
+    required: true,
+  },
+  course_description: {
+    type: String,
+    required: true,
+    maxlength: 500,
+  },
+  course_modules: [
     {
-      moduleTitle: { type: String, required: true },
-      projects: [
+      module_id: {
+        type: String,
+        unique: true,
+      },
+      module_title: {
+        type: String,
+      },
+      module_steps: [
         {
-          projectTitle: { type: String, required: true },
-          steps: [
+          step_title: {
+            type: String,
+          },
+          step_example: {
+            type: String,
+            maxlength: 500,
+          },
+          step_description: {
+            type: String,
+            maxlength: 500,
+          },
+          step_task: [
             {
-              stepTitle: { type: String, required: true },
-              explanation: { type: String, required: true },
-              exampleCode: { type: String },
-              instructions: [{ type: String, required: true }],
-              notes: [{ type: String }],
-              problem: {
-                description: { type: String, required: true },
-                testCases: [
-                  {
-                    input: { type: String },
-                    expectedOutput: { type: String, required: true },
-                  },
-                ],
+              task_description: {
+                type: String,
+                maxlength: 500,
+              },
+              task_testcases: {
+                type: String,
+                maxlength: 500,
+              },
+              task_output: {
+                type: String,
+                maxlength: 500,
               },
             },
           ],
@@ -31,6 +57,10 @@ const courseSchema = new mongoose.Schema({
       ],
     },
   ],
+  course_level: {
+    type: String,
+    required: true,
+    enum: ["Beginner", "Intermediate", "Advance"],
+  },
 });
-
 module.exports = mongoose.model("Course", courseSchema);
