@@ -1,14 +1,10 @@
 const mongoose = require("mongoose");
 
 const courseSchema = new mongoose.Schema({
-  course_id: {
-    type: String,
-    required: true,
-    unique: true,
-  },
   course_name: {
     type: String,
     required: true,
+    unique: true,
   },
   course_description: {
     type: String,
@@ -18,8 +14,8 @@ const courseSchema = new mongoose.Schema({
   course_modules: [
     {
       module_id: {
-        type: String,
-        unique: true,
+        type: mongoose.Schema.Types.ObjectId, // Changed to ObjectId for consistency
+        auto: true, // Automatically generate unique IDs for modules
       },
       module_title: {
         type: String,
@@ -63,4 +59,5 @@ const courseSchema = new mongoose.Schema({
     enum: ["Beginner", "Intermediate", "Advance"],
   },
 });
+
 module.exports = mongoose.model("Course", courseSchema);

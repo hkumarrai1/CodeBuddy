@@ -30,21 +30,45 @@ router.post("/register", async (req, res) => {
 // Login Route
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
 
   try {
-    // Check if user exists
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: "Invalid email or password" });
     }
 
-    // Verify password
     const isPasswordMatch = await bcrypt.compare(password, user.password);
     if (!isPasswordMatch) {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    // Generate JWT
+    const currentDate = new Date();
+    const lastLoginDate = user.lastLogin ? new Date(user.lastLogin) : null;
+
+    if (lastLoginDate) {
+      const timeDifference = currentDate - lastLoginDate;
+      const daysDifference = timeDifference / (1000 * 60 * 60 * 24);
+
+      if (daysDifference < 1) {
+        // Same day login, streak remains unchanged
+      } else if (daysDifference < 2) {
+        // Consecutive day login, increment streak
+        user.streak += 1;
+      } else {
+        // Missed days, reset streak
+        user.streak = 1;
+      }
+    } else {
+      // First login, initialize streak
+      user.streak = 1;
+    }
+
+    user.lastLogin = currentDate;
+    await user.save();
+
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
@@ -53,11 +77,17 @@ router.post("/login", async (req, res) => {
       }
     );
 
-    res.status(200).json({ Token: token, message: "Login successful" });
+    res.status(200).json({
+      token: token,
+      message: "Login successful",
+      streak: user.streak,
+      lastLogin: user.lastLogin,
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });
+
 router.put("/profile", protect, async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
@@ -84,8 +114,42 @@ router.put("/profile", protect, async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });
+
 router.post("/logout", protect, (req, res) => {
   res.json({ message: "User logged out successfully" });
+});
+
+router.get("/user", protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select(
+      "name streak lastLogin"
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+router.get("/enrolled-courses", protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).populate({
+      path: "enrolledCourses.course_id",
+      select: "course_name course_description course_level",
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(user.enrolledCourses);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 });
 
 module.exports = router;

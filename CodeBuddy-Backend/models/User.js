@@ -15,6 +15,26 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  lastLogin: {
+    type: Date,
+    default: null,
+  },
+  streak: {
+    type: Number,
+    default: 0,
+  },
+  enrolledCourses: [
+    {
+      course_id: {
+        type: mongoose.Schema.Types.ObjectId, // Changed to ObjectId to reference Course model
+        ref: "Course",
+      },
+      progress: {
+        type: Number,
+        default: 0, // Progress in percentage
+      },
+    },
+  ],
 });
 
 // Hash password before saving
